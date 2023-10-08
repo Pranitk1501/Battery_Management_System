@@ -1,24 +1,24 @@
-  /* Battery Management System
-uses 24 volt Li-Po Battery */
+/* Battery Management System
+   uses 24 volt Li-Po Battery */
 
-// ----------------------------------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
-// inputs
-#define volt_pin 36
-#define curr_pin 39
-#define pot_pin 34
-#define temp_pin 35
+// Inputs
+#define VOLT_PIN 36
+#define CURR_PIN 39
+#define POT_PIN 34
+#define TEMP_PIN 35
 
-// driver control pins
-#define vref 16
-#define dir 23
-#define brk 22
+// Driver control pins
+#define VREF_PIN 16
+#define DIR_PIN 23
+#define BRK_PIN 22
 
-// ----------------------------------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 // Global variables
 float resolution = 4096.0;
-float R1 = 1000.0, R2 = 150.0; 
+float R1 = 1000.0, R2 = 150.0;
 float R = (R2 / (R1 + R2));
 
 // Current calculation variables
@@ -31,112 +31,105 @@ float volt_threshold = 22;
 float curr_threshold = 3;
 float temp_threshold = 45;
 
-// ----------------------------------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
-int get_speed()
-{
-  int Speed = analogRead(pot_pin);
-  int speed_changed = map(Speed, 0, 4095, 0, 255);
+int getSpeed() {
+  int speed = analogRead(POT_PIN);
+  int speed_changed = map(speed, 0, 4095, 0, 255);
   ledcWrite(0, speed_changed);
   return speed_changed;
 }
 
-void motor_init()
-{
-  digitalWrite(brk, HIGH) ;
-  digitalWrite(dir, HIGH) ;
-  get_speed();
+void motorInit() {
+  digitalWrite(BRK_PIN, HIGH);
+  digitalWrite(DIR_PIN, HIGH);
+  getSpeed();
 }
 
-void stop_motor()
-{
-  int speed_pot = analogRead(pot_pin);
+void stopMotor() {
+  int speed_pot = analogRead(POT_PIN);
   int speedinkms = map(speed_pot, 0, 4095, 0, 72);
-  if(speedinkms > 20) {
-    for(int i = speed_pot; i >= 20; i--){
+  if (speedinkms > 20) {
+    for (int i = speed_pot; i >= 20; i--) {
       ledcWrite(0, i);
       delay(10);
     }
+  } else {
+    ledcWrite(0, 0);
   }
-  else
-      ledcWrite(0, 0);
   delay(1000);
 }
 
-float get_voltage()
-{
-  int volt_at_pin = analogRead(volt_pin);
+float getVoltage() {
+  int volt_at_pin = analogRead(VOLT_PIN);
   float voltage_in = (volt_at_pin * 3.3) / resolution;
   float ans = voltage_in / R;
   return ans;
 }
 
-float get_current()
-{
+float getCurrent() {
   float Vout = 0;
   for (int i = 0; i < 100; i++) {
-    Vout = (Vout + (resADC * analogRead(curr_pin)));
+    Vout = (Vout + (resADC * analogRead(CURR_PIN)));
     delay(1);
   }
 
   Vout = Vout / 100;
-  float ActualCurrent = (Vout - zeroPoint) / scale_factor + curr_error;
+  float actualCurrent = (Vout - zeroPoint) / scale_factor + curr_error;
 
-  return ActualCurrent;
+  return actualCurrent;
 }
 
-float get_temperature()
-{
-  int temp_at_pin = analogRead(temp_pin);
-  float mv = ( temp_at_pin/4096.0)*5000;
-  float cel = mv/10;
+float getTemperature() {
+  int temp_at_pin = analogRead(TEMP_PIN);
+  float mv = (temp_at_pin / 4096.0) * 5000;
+  float cel = mv / 10;
 
   return cel;
 }
 
-// ----------------------------------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 void setup() {
   Serial.begin(115200);
   Serial.println("Battery Management System");
 
-  ledcAttachPin(vref, 0);
+  ledcAttachPin(VREF_PIN, 0);
   ledcSetup(0, 5000, 8);
 
-  pinMode(brk, OUTPUT) ;
-  pinMode(dir, OUTPUT) ;
+  pinMode(BRK_PIN, OUTPUT);
+  pinMode(DIR_PIN, OUTPUT);
 
-  pinMode(volt_pin, INPUT) ;
-  pinMode(curr_pin, INPUT) ;
-  pinMode(pot_pin, INPUT) ;
-  pinMode(temp_pin, INPUT) ;
-  
-  motor_init();
-  
+  pinMode(VOLT_PIN, INPUT);
+  pinMode(CURR_PIN, INPUT);
+  pinMode(POT_PIN, INPUT);
+  pinMode(TEMP_PIN, INPUT);
+
+  motorInit();
 }
 
 float voltage, current, temperature, motor_speed;
 
 void loop() {
-  motor_speed = get_speed();
-  
-  voltage = get_voltage();
-  if(voltage < volt_threshold)
-    stop_motor();
+  motor_speed = getSpeed();
 
-  current = get_current();
-  if(current > curr_threshold)
-    stop_motor();
+  voltage = getVoltage();
+  if (voltage < volt_threshold)
+    stopMotor();
 
-  temperature = get_temperature();
-  if(temperature > temp_threshold)
-    stop_motor();
+  current = getCurrent();
+  if (current > curr_threshold)
+    stopMotor();
+
+  temperature = getTemperature();
+  if (temperature > temp_threshold)
+    stopMotor();
 
   Serial.print("Speed: ");
   Serial.print(motor_speed);
   Serial.print(" Km/h");
   Serial.println();
-  
+
   Serial.print("Voltage: ");
   Serial.print(voltage);
   Serial.print(" Volts");

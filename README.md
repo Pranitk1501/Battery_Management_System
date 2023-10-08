@@ -58,9 +58,6 @@ You can customize the system by adjusting the following parameters in the code:
 - `curr_threshold`: Current threshold for motor shutdown.
 - `temp_threshold`: Temperature threshold for motor shutdown.
 
-## Contributing
-
-Contributions are welcome! If you have ideas for improvements or bug fixes, please submit a pull request or open an issue. See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
 
 ## License
 
